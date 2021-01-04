@@ -282,6 +282,29 @@ Default Value:
 ```
 time() + (DAY_IN_SECONDS * 7)
 ```
+### jwt_auth_customize_error_msg
+
+The **jwt_auth_customize_error_msg** allows you to change the object returned (by default a WP_Error object) when an error occurs, usefull to uniform them with the object returned in your custom REST API.
+
+Default Value:
+
+```json
+[
+  {
+    "code": "[code]",
+    "message": "[message]",
+    "data": {
+      "status": [status code]
+    }
+  }
+]
+```
+
+### jwt_auth_after_authentication
+
+The **jwt_auth_after_authentication** allows you after authentication and before return the token to made some additionals checks, for example to check if the user is enabled or if there are additionals parameters that must be send in the authentication process.
+
+Return **True** if the checks pass, otherwise the response **object**.
 
 ### jwt_auth_token_before_sign
 
