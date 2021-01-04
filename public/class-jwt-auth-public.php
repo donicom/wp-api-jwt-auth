@@ -135,7 +135,7 @@ class Jwt_Auth_Public
             return apply_filters('jwt_auth_customize_error_msg', $error_msg);
         }
 
-        $afterAuth = apply_filters('jwt_auth_after_authentication', $request, $user);
+        $afterAuth = apply_filters('jwt_auth_after_authentication', true, $request, $user);
 
         if($afterAuth !== TRUE) {
             return $afterAuth;
