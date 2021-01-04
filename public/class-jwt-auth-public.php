@@ -110,13 +110,14 @@ class Jwt_Auth_Public
 
         /** First thing, check the secret key if not exist return a error*/
         if (!$secret_key) {
-            return new WP_Error(
+            $error_msg = new WP_Error(
                 'jwt_auth_bad_config',
                 __('JWT is not configurated properly, please contact the admin', 'wp-api-jwt-auth'),
                 array(
                     'status' => 403,
                 )
             );
+            return apply_filters('jwt_auth_customize_error_msg', $error_msg);
         }
         /** Try to authenticate the user with the passed credentials*/
         $user = wp_authenticate($username, $password);
@@ -124,13 +125,20 @@ class Jwt_Auth_Public
         /** If the authentication fails return a error*/
         if (is_wp_error($user)) {
             $error_code = $user->get_error_code();
-            return new WP_Error(
+            $error_msg = new WP_Error(
                 '[jwt_auth] ' . $error_code,
                 $user->get_error_message($error_code),
                 array(
                     'status' => 403,
                 )
             );
+            return apply_filters('jwt_auth_customize_error_msg', $error_msg);
+        }
+
+        $afterAuth = apply_filters('jwt_auth_after_authentication', $request, $user);
+
+        if($afterAuth !== TRUE) {
+            return $afterAuth;
         }
 
         /** Valid credentials, the user exists create the according Token */
@@ -234,13 +242,14 @@ class Jwt_Auth_Public
         }
 
         if (!$auth) {
-            return new WP_Error(
+            $error_msg = new WP_Error(
                 'jwt_auth_no_auth_header',
                 'Authorization header not found.',
                 array(
                     'status' => 403,
                 )
             );
+            return apply_filters('jwt_auth_customize_error_msg', $error_msg);
         }
 
         /*
@@ -249,25 +258,27 @@ class Jwt_Auth_Public
          */
         list($token) = sscanf($auth, 'Bearer %s');
         if (!$token) {
-            return new WP_Error(
+            $error_msg = new WP_Error(
                 'jwt_auth_bad_auth_header',
                 'Authorization header malformed.',
                 array(
                     'status' => 403,
                 )
             );
+            return apply_filters('jwt_auth_customize_error_msg', $error_msg);
         }
 
         /** Get the Secret Key */
         $secret_key = defined('JWT_AUTH_SECRET_KEY') ? JWT_AUTH_SECRET_KEY : false;
         if (!$secret_key) {
-            return new WP_Error(
+            $error_msg = new WP_Error(
                 'jwt_auth_bad_config',
                 'JWT is not configurated properly, please contact the admin',
                 array(
                     'status' => 403,
                 )
             );
+            return apply_filters('jwt_auth_customize_error_msg', $error_msg);
         }
 
         /** Try to decode the token */
@@ -276,24 +287,26 @@ class Jwt_Auth_Public
             /** The Token is decoded now validate the iss */
             if ($token->iss != get_bloginfo('url')) {
                 /** The iss do not match, return error */
-                return new WP_Error(
+                $error_msg = new WP_Error(
                     'jwt_auth_bad_iss',
                     'The iss do not match with this server',
                     array(
                         'status' => 403,
                     )
                 );
+                return apply_filters('jwt_auth_customize_error_msg', $error_msg);
             }
             /** So far so good, validate the user id in the token */
             if (!isset($token->data->user->id)) {
                 /** No user id in the token, abort!! */
-                return new WP_Error(
+                $error_msg = new WP_Error(
                     'jwt_auth_bad_request',
                     'User ID not found in the token',
                     array(
                         'status' => 403,
                     )
                 );
+                return apply_filters('jwt_auth_customize_error_msg', $error_msg);
             }
             /** Everything looks good return the decoded token if the $output is false */
             if (!$output) {
@@ -308,13 +321,14 @@ class Jwt_Auth_Public
             );
         } catch (Exception $e) {
             /** Something is wrong trying to decode the token, send back the error */
-            return new WP_Error(
+            $error_msg = new WP_Error(
                 'jwt_auth_invalid_token',
                 $e->getMessage(),
                 array(
                     'status' => 403,
                 )
             );
+            return apply_filters('jwt_auth_customize_error_msg', $error_msg);
         }
     }
 
